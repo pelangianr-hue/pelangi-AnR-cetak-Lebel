@@ -3,7 +3,7 @@
 <head>
 <style>
   @page {
-    size: 40mm 20mm; /* Sesuaikan dengan ukuran fisik kertas label Anda */
+    size: 15mm 30mm; /* Sesuaikan dengan ukuran fisik kertas label Anda */
     margin: 0;
   }
   body {
