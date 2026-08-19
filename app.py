@@ -7,13 +7,22 @@ st.set_page_config(page_title="Cetak Label Pelangi AnR", layout="wide")
 
 st.title("Aplikasi Cetak Label Barcode - Bulk Print")
 
-# Sidebar - Mode Input Data
-st.sidebar.header("Pengaturan Cetak")
+# ==================== SIDEBAR ====================
+st.sidebar.header("1. Pengaturan Data")
 mode_input = st.sidebar.radio("Sumber Data", ["Input Manual", "Upload Excel"])
 
 nama_toko_default = st.sidebar.text_input("Nama Toko Default", value="Pelangi AnR")
-jumlah_kolom = st.sidebar.radio("Pilih Jumlah Label per Baris", [1, 2, 3], index=1)
+jumlah_kolom = st.sidebar.radio("Jumlah Label per Baris", [1, 2, 3], index=1)
 
+# --- CONTROL PANEL LAYOUT (Pengaturan Ukuran) ---
+st.sidebar.header("2. Pengaturan Layout & Ukuran")
+ukuran_harga = st.sidebar.slider("Ukuran Teks Harga (pt)", min_value=5, max_value=14, value=8)
+ukuran_kode = st.sidebar.slider("Ukuran Teks Kode (pt)", min_value=5, max_value=12, value=7)
+ukuran_nama = st.sidebar.slider("Ukuran Nama Produk (pt)", min_value=5, max_value=12, value=6)
+ukuran_toko = st.sidebar.slider("Ukuran Teks Toko (pt)", min_value=5, max_value=12, value=7)
+tinggi_barcode = st.sidebar.slider("Tinggi Barcode (mm)", min_value=4, max_value=15, value=8)
+
+# ==================== PENGOLAHAN DATA ====================
 items = []
 
 if mode_input == "Input Manual":
@@ -34,14 +43,6 @@ if mode_input == "Input Manual":
 else:
     st.sidebar.subheader("Upload File Excel")
     uploaded_file = st.sidebar.file_uploader("Pilih File Excel (.xlsx / .xls)", type=["xlsx", "xls"])
-    
-    st.sidebar.info("""
-    **Format Kolom Excel:**
-    * `nama_produk`
-    * `kode_produk`
-    * `harga`
-    * `jumlah` (Opsional, default 1)
-    """)
 
     if uploaded_file is not None:
         try:
@@ -51,7 +52,6 @@ else:
             st.dataframe(df)
 
             for index, row in df.iterrows():
-                # Membaca kolom excel
                 nama_p = str(row.get('nama_produk', ''))
                 kode_p = str(row.get('kode_produk', ''))
                 harga_p = str(row.get('harga', ''))
@@ -67,9 +67,9 @@ else:
         except Exception as e:
             st.error(f"Gagal membaca file Excel: {e}")
 
-# Render Komponen Cetak
+# ==================== RENDER LABEL ====================
 if items:
-    # Membangun HTML Label
+    # Memasukkan nilai ukuran dari slider ke dalam CSS HTML
     html_code = f"""
     <!DOCTYPE html>
     <html>
@@ -122,14 +122,14 @@ if items:
       }}
 
       .store-name {{
-        font-size: 6.5pt;
+        font-size: {ukuran_toko}pt;
         font-weight: bold;
         text-align: center;
         line-height: 1;
       }}
 
       .product-name {{
-        font-size: 6pt;
+        font-size: {ukuran_nama}pt;
         text-align: center;
         white-space: nowrap;
         overflow: hidden;
@@ -146,7 +146,7 @@ if items:
 
       .barcode-container svg {{
         max-width: 100%;
-        height: 8mm;
+        height: {tinggi_barcode}mm;
         display: block;
         margin: 0 auto;
       }}
@@ -156,7 +156,16 @@ if items:
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 6.5pt;
+        line-height: 1;
+      }}
+
+      .text-kode {{
+        font-size: {ukuran_kode}pt;
+        font-weight: bold;
+      }}
+
+      .text-harga {{
+        font-size: {ukuran_harga}pt;
         font-weight: bold;
       }}
 
@@ -180,7 +189,6 @@ if items:
       <div class="label-grid">
     """
 
-    # Loop seluruh item untuk dibuatkan card labelnya
     for idx, item in enumerate(items):
         html_code += f"""
         <div class="label-card">
@@ -192,8 +200,8 @@ if items:
             <svg id="barcode-{idx}"></svg>
           </div>
           <div class="footer">
-            <span>{item['kode']}</span>
-            <span>Rp {item['harga']}</span>
+            <span class="text-kode">{item['kode']}</span>
+            <span class="text-harga">Rp {item['harga']}</span>
           </div>
         </div>
         """
@@ -222,7 +230,6 @@ if items:
     </html>
     """
 
-    # Hitung tinggi container preview secara dinamis
     total_rows = (len(items) + jumlah_kolom - 1) // jumlah_kolom
     dynamic_height = max(250, total_rows * 90)
 
