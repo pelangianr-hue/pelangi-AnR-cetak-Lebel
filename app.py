@@ -1,9 +1,16 @@
+import streamlit as st
+import streamlit.components.v1 as components
+
+st.title("Aplikasi Cetak Label")
+
+# Bungkus kode HTML & CSS ke dalam string multiline (menggunakan triple quotes)
+html_code = """
 <!DOCTYPE html>
 <html>
 <head>
 <style>
   @page {
-    size: 40mm 20mm; /* Sesuaikan dengan ukuran fisik kertas label Anda */
+    size: 40mm 20mm;
     margin: 0;
   }
   body {
@@ -17,7 +24,7 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    overflow: hidden; /* Mencegah teks melimpah keluar label */
+    overflow: hidden;
   }
   .header {
     width: 100%;
@@ -32,7 +39,7 @@
     font-size: 6.5pt;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Menambahkan '...' jika teks terlalu panjang */
+    text-overflow: ellipsis;
     line-height: 1.1;
   }
   .barcode-container {
@@ -40,9 +47,9 @@
     text-align: center;
     margin: 1px 0;
   }
-  .barcode-container img, .barcode-container svg {
+  .barcode-container svg {
     max-width: 100%;
-    height: 9mm; /* Menjaga area barcode tetap bersih dari teks */
+    height: 9mm;
     display: block;
     margin: 0 auto;
   }
@@ -58,32 +65,32 @@
 </head>
 <body>
 
-  <!-- Zona 1: Header & Nama Produk -->
   <div class="header">
     <div class="store-name">Pelangi AnR</div>
     <div class="product-name">Bando Sirkam Plastik</div>
   </div>
 
-  <!-- Zona 2: Gambar Barcode Bersih -->
   <div class="barcode-container">
     <svg id="barcode"></svg>
   </div>
 
-  <!-- Zona 3: Kode Produk & Harga -->
   <div class="footer">
     <span>AH030</span>
     <span>Rp 15.000</span>
   </div>
 
-  <!-- Generasi Barcode Otomatis (menggunakan JsBarcode) -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script>
     JsBarcode("#barcode", "AH030", {
       format: "CODE128",
-      displayValue: false, // Opsi penting: nonaktifkan teks bawaan barcode agar tidak bertumpuk
+      displayValue: false,
       margin: 0,
       height: 35
     });
   </script>
 </body>
 </html>
+"""
+
+# Tampilkan HTML di Streamlit
+components.html(html_code, height=150)
