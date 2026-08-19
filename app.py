@@ -7,102 +7,136 @@ from reportlab.graphics.shapes import Drawing
 from reportlab.graphics import renderPDF
 import io
 
-st.set_page_config(page_title="Cetak Label OpenLabel Style", page_icon="🏷️", layout="wide")
+st.set_page_config(page_title="Print Label Pro - pelangi AnR Style", page_icon="🏷️", layout="wide")
 
-# CSS Kustom untuk Tampilan Mirip OpenLabel
+# CSS Styling untuk Tampilan Mirip OpenLabel
 st.markdown("""
     <style>
-    .preview-card {
-        border: 2px solid #28a745;
-        border-radius: 8px;
-        padding: 8px;
+    .stApp { background-color: #f4f6f9; }
+    .label-card {
+        border: 1px dashed #777;
         background-color: #ffffff;
-        text-align: center;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-        margin-bottom: 10px;
-    }
-    .stButton>button {
-        background-color: #007bff;
-        color: white;
-        font-weight: bold;
-        border-radius: 8px;
-        height: 3em;
+        padding: 8px;
         width: 100%;
+        min-height: 120px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        font-family: Arial, sans-serif;
     }
+    .store-name { font-size: 11px; font-weight: bold; text-align: left; margin: 0; }
+    .prod-name { font-size: 10px; line-height: 1.1; margin-top: 2px; text-align: left; }
+    .price-tag { font-size: 16px; font-weight: bold; text-align: right; margin-top: 4px; }
+    .sku-tag { font-size: 9px; text-align: center; margin-top: 2px; font-weight: bold; }
+    .barcode-mock { text-align: center; font-size: 18px; letter-spacing: -1px; margin-top: -5px; }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🏷️ Pembuat Label Toko (OpenLabel Style)")
-st.caption("Khusus Stiker 15x30 mm (2 Line) / Bluetooth Thermal ECO80")
+st.title("🏷️ Studio Label Toko (2 Line - 15x30 mm)")
 
-# 1. UPLOAD FILE EXCEL
-uploaded_file = st.file_uploader("📂 Upload File Excel Data Produk Anda", type=["xlsx", "xls"])
+# Inisialisasi Tab
+tab_data, tab_custom, tab_preview, tab_print = st.tabs([
+    "📂 1. Data Excel", 
+    "⚙️ 2. Tab Kustomisasi", 
+    "👁️ 3. Live Preview", 
+    "🖨️ 4. Cetak PDF"
+])
 
-if uploaded_file:
-    df = pd.read_excel(uploaded_file)
+# --- TAB 1: DATA EXCEL ---
+with tab_data:
+    st.subheader("Upload & Pilih Data Produk")
+    uploaded_file = st.file_uploader("Upload File Excel (.xlsx / .xls)", type=["xlsx", "xls"])
     
-    # KEBUTUHAN 4: SOROT DATA / BARIS DARI EXCEL
-    st.subheader("📊 1. Sorot & Pilih Data yang Akan Dicetak")
-    
-    # Tambahkan kolom centang secara interaktif
-    df.insert(0, "Cetak", True)
-    edited_df = st.data_editor(
-        df,
-        column_config={"Cetak": st.column_config.CheckboxColumn("Pilih", default=True)},
-        disabled=[col for col in df.columns if col != "Cetak"],
-        hide_index=True,
-        use_container_width=True
-    )
-    
-    # Filter hanya data yang dicentang user
-    selected_data = edited_df[edited_df["Cetak"] == True].drop(columns=["Cetak"])
-    
-    if len(selected_data) == 0:
-        st.warning("⚠️ Silakan centang minimal 1 data produk untuk dicetak.")
-    else:
-        st.success(f"✅ Total {len(selected_data)} item dipilih.")
-
-        # KEBUTUHAN 2 & 3: KUSTOMISASI ELEMEN & TIPE BARCODE
-        st.subheader("⚙️ 2. Kustomisasi Isi & Format Barcode")
-        col_opt1, col_opt2 = st.columns(2)
-        
-        with col_opt1:
-            st.markdown("**Format Barcode:**")
-            barcode_type = st.radio(
-                "Pilih Jenis Barcode:",
-                ["Code 128 (Angka & Huruf)", "EAN-13 (13 Digit Angka Murni)"],
-                horizontal=True
-            )
+    if uploaded_file:
+        df = pd.read_excel(uploaded_file)
+        if "Pilih" not in df.columns:
+            df.insert(0, "Pilih", True)
+        if "Jumlah_Cetak" not in df.columns:
+            df.insert(1, "Jumlah_Cetak", 1)
             
-        with col_opt2:
-            st.markdown("**Item yang Ditampilkan di Label:**")
-            show_nama = st.checkbox("Nama Produk", value=True)
-            show_harga = st.checkbox("Harga Produk", value=True)
-            show_barcode_img = st.checkbox("Gambar Barcode", value=True)
-            show_sku_text = st.checkbox("Teks Kode Barcode / SKU", value=True)
+        edited_df = st.data_editor(
+            df,
+            column_config={
+                "Pilih": st.column_config.CheckboxColumn("Cetak?", default=True),
+                "Jumlah_Cetak": st.column_config.NumberColumn("Jml Stiker", min_value=1, max_value=100, default=1)
+            },
+            disabled=[col for col in df.columns if col not in ["Pilih", "Jumlah_Cetak"]],
+            use_container_width=True,
+            hide_index=True
+        )
+        selected_df = edited_df[edited_df["Pilih"] == True]
+        st.success(f" Total {len(selected_df)} jenis produk terpilih.")
 
-        # KEBUTUHAN 1: JENDELA PREVIEW
-        st.subheader("👁️ 3. Preview Hasil Jadi Label (15x30 mm)")
+# --- TAB 2: TAB KUSTOMISASI ---
+with tab_custom:
+    st.subheader(" ⚙️ Pengaturan Layout & Elemen Label")
+    
+    col_c1, col_c2, col_c3 = st.columns(3)
+    
+    with col_c1:
+        st.markdown("**1. Informasi Toko & Teks**")
+        store_name = st.text_input("Nama Toko Header", value="pelangi AnR")
+        show_store = st.checkbox("Tampilkan Nama Toko", value=True)
+        show_name = st.checkbox("Tampilkan Nama Produk", value=True)
+        show_price = st.checkbox("Tampilkan Harga", value=True)
+        show_sku_text = st.checkbox("Tampilkan Kode SKU di atas Barcode", value=True)
         
-        sample_item = selected_data.iloc[0]
-        s_nama = str(sample_item.get('Nama_Produk', 'Nama Produk'))[:14] if show_nama else ""
-        s_harga = f"Rp {sample_item.get('Harga', '0')}" if show_harga else ""
-        s_code = str(sample_item.get('Barcode', '123456789012')) if show_sku_text else ""
+    with col_c2:
+        st.markdown("**2. Format & Tipe Barcode**")
+        barcode_type = st.selectbox("Jenis Barcode", ["Code 128 (Umum)", "EAN-13 (Standard Retail 13 Digit)"])
+        show_barcode = st.checkbox("Tampilkan Gambar Barcode", value=True)
+        barcode_height_mm = st.slider("Tinggi Barcode (mm)", 2, 6, 4)
+        
+    with col_c3:
+        st.markdown("**3. Pemetaan Kolom Excel**")
+        if uploaded_file:
+            cols = list(df.columns)
+            col_prod = st.selectbox("Kolom Nama Produk", options=cols, index=cols.index("Nama_Produk") if "Nama_Produk" in cols else 0)
+            col_price = st.selectbox("Kolom Harga", options=cols, index=cols.index("Harga") if "Harga" in cols else 0)
+            col_code = st.selectbox("Kolom Barcode/SKU", options=cols, index=cols.index("Barcode") if "Barcode" in cols else 0)
+        else:
+            col_prod, col_price, col_code = "Nama_Produk", "Harga", "Barcode"
 
-        col_p1, col_p2 = st.columns(2)
-        for p_col, title in zip([col_p1, col_p2], ["Stiker Kiri (Line 1)", "Stiker Kanan (Line 2)"]):
-            with p_col:
-                st.caption(title)
-                preview_html = f"<div class='preview-card'>"
-                if show_nama: preview_html += f"<b>{s_nama}</b><br>"
-                if show_harga: preview_html += f"<span style='color:red; font-weight:bold;'>{s_harga}</span><br>"
-                if show_barcode_img: preview_html += "<small>|||||||||||||||||||||</small><br>"
-                if show_sku_text: preview_html += f"<small>{s_code}</small>"
-                preview_html += "</div>"
-                st.markdown(preview_html, unsafe_allow_html=True)
+# --- TAB 3: LIVE PREVIEW ---
+with tab_preview:
+    st.subheader("👁️ Simulasi Tampilan Hasil Jadi")
+    
+    if uploaded_file and len(selected_df) > 0:
+        sample = selected_df.iloc[0]
+        p_name = str(sample.get(col_prod, "Botol Spray 35ml"))
+        p_price = str(sample.get(col_price, "7.500"))
+        p_code = str(sample.get(col_code, "F039"))
+        
+        col_pv1, col_pv2 = st.columns(2)
+        for pv, label_title in zip([col_pv1, col_pv2], ["Stiker Kiri (Line 1)", "Stiker Kanan (Line 2)"]):
+            with pv:
+                st.caption(label_title)
+                st.markdown(f"""
+                <div class="label-card">
+                    {f'<div class="store-name">{store_name}</div>' if show_store else ''}
+                    {f'<div class="prod-name">{p_name}</div>' if show_name else ''}
+                    {f'<div class="price-tag">Rp {p_price}</div>' if show_price else ''}
+                    {f'<div class="sku-tag">{p_code}</div>' if show_sku_text else ''}
+                    {f'<div class="barcode-mock">|||||||||||||||||||||||||</div>' if show_barcode else ''}
+                </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.info("Upload file Excel di Tab 1 untuk melihat preview interaktif.")
 
-        # GENERATE PDF SIAP PRINT
-        if st.button("🚀 CETAK / DOWNLOAD FILE PDF"):
+# --- TAB 4: CETAK PDF ---
+with tab_print:
+    st.subheader("🖨️ Export PDF Siap Cetak")
+    
+    if uploaded_file and len(selected_df) > 0:
+        # Replikasi data sesuai Jumlah_Cetak
+        expanded_rows = []
+        for _, row in selected_df.iterrows():
+            qty = int(row.get("Jumlah_Cetak", 1))
+            for _ in range(qty):
+                expanded_rows.append(row)
+        print_df = pd.DataFrame(expanded_rows)
+        
+        st.write(f"Total Stiker yang akan Dicetak: **{len(print_df)} Pcs**")
+        
+        if st.button("🚀 GENERATE PDF (SIAP PRINT BLUEPRINT ECO80)"):
             buffer = io.BytesIO()
             label_w, label_h = 30 * mm, 15 * mm
             gap_between = 2 * mm
@@ -110,51 +144,62 @@ if uploaded_file:
 
             pdf = canvas.Canvas(buffer, pagesize=(page_w, page_h))
 
-            for i in range(0, len(selected_data), 2):
+            for i in range(0, len(print_df), 2):
                 for col in range(2):
-                    if i + col < len(selected_data):
-                        row = selected_data.iloc[i + col]
-                        nama = str(row.get('Nama_Produk', ''))
-                        harga = str(row.get('Harga', ''))
-                        sku = str(row.get('Barcode', ''))
+                    if i + col < len(print_df):
+                        row = print_df.iloc[i + col]
+                        nama = str(row.get(col_prod, ''))
+                        harga = str(row.get(col_price, ''))
+                        sku = str(row.get(col_code, ''))
 
-                        x_offset = col * (label_w + gap_between)
+                        x_off = col * (label_w + gap_between)
 
-                        # Draw Nama
-                        if show_nama:
-                            pdf.setFont("Helvetica-Bold", 6)
-                            pdf.drawString(x_offset + 1*mm, label_h - 3.5*mm, nama[:14])
+                        # 1. Header Nama Toko
+                        if show_store:
+                            pdf.setFont("Helvetica-Bold", 4.5)
+                            pdf.drawString(x_off + 1*mm, label_h - 2.5*mm, store_name)
 
-                        # Draw Harga
-                        if show_harga:
-                            pdf.setFont("Helvetica", 5)
-                            pdf.drawString(x_offset + 1*mm, label_h - 6.5*mm, f"Rp {harga}")
+                        # 2. Nama Produk (2 Baris)
+                        if show_name:
+                            pdf.setFont("Helvetica-Bold", 4.5)
+                            pdf.drawString(x_off + 1*mm, label_h - 5*mm, nama[:15])
+                            if len(nama) > 15:
+                                pdf.drawString(x_off + 1*mm, label_h - 7*mm, nama[15:30])
 
-                        # Draw Barcode (EAN-13 / Code128)
-                        if show_barcode_img and sku:
+                        # 3. Harga Produk (Kanan Bawah)
+                        if show_price:
+                            pdf.setFont("Helvetica-Bold", 7.5)
+                            pdf.drawRightString(x_off + label_w - 1*mm, 5.5*mm, f"Rp {harga}")
+
+                        # 4. SKU Code
+                        if show_sku_text and sku:
+                            pdf.setFont("Helvetica-Bold", 4)
+                            pdf.drawCentredString(x_off + (label_w/2), 4.2*mm, sku)
+
+                        # 5. Barcode
+                        if show_barcode and sku:
                             try:
                                 if "EAN-13" in barcode_type:
-                                    # EAN13 butuh 12/13 digit angka
                                     clean_sku = ''.join(filter(str.isdigit, sku)).zfill(12)[:12]
-                                    ean = eanbc.Ean13BarcodeWidget(clean_sku, barHeight=4*mm, barWidth=0.25*mm)
-                                    d = Drawing(25*mm, 4*mm)
+                                    ean = eanbc.Ean13BarcodeWidget(clean_sku, barHeight=barcode_height_mm*mm, barWidth=0.2*mm)
+                                    d = Drawing(20*mm, barcode_height_mm*mm)
                                     d.add(ean)
-                                    renderPDF.draw(d, pdf, x_offset + 1*mm, 1.5*mm)
+                                    renderPDF.draw(d, pdf, x_off + 3*mm, 0.5*mm)
                                 else:
-                                    # Code 128
-                                    bc = code128.Code128(sku, barHeight=3.5*mm, barWidth=0.25)
-                                    bc.drawOn(pdf, x_offset + 1*mm, 1.5*mm)
+                                    bc = code128.Code128(sku, barHeight=barcode_height_mm*mm, barWidth=0.2)
+                                    bc.drawOn(pdf, x_off + 3*mm, 0.5*mm)
                             except:
                                 pass
-
                 pdf.showPage()
 
             pdf.save()
             buffer.seek(0)
 
             st.download_button(
-                label="📥 UNDUH PDF LABEL (SIAP PRINT VIA RAWBT)",
+                label="📥 UNDUH FILE PDF LABEL",
                 data=buffer,
-                file_name="label_openlabel_style.pdf",
+                file_name="Label_pelangi_AnR.pdf",
                 mime="application/pdf"
             )
+    else:
+        st.warning("Silakan tuntaskan pengaturan data di Tab 1 terlebih dahulu.")
