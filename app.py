@@ -3,12 +3,12 @@
 <head>
 <style>
   @page {
-    size: 15mm 30mm; /* Sesuaikan dengan ukuran fisik kertas label Anda */
+    size: 40mm 20mm; /* Sesuaikan dengan ukuran fisik kertas label Anda */
     margin: 0;
   }
   body {
-    width: 30mm;
-    height: 15mm;
+    width: 40mm;
+    height: 20mm;
     margin: 0;
     padding: 1mm 2mm;
     box-sizing: border-box;
