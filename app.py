@@ -7,8 +7,8 @@
     margin: 0;
   }
   body {
-    width: 40mm;
-    height: 20mm;
+    width: 30mm;
+    height: 15mm;
     margin: 0;
     padding: 1mm 2mm;
     box-sizing: border-box;
