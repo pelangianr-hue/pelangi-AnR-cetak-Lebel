@@ -23,11 +23,11 @@ tinggi_label = st.sidebar.number_input("Tinggi 1 Label (mm)", value=20)
 gap_horizontal = st.sidebar.number_input("Jarak GAP Tengah (mm)", value=2)
 
 st.sidebar.header("3. Pengaturan Teks & Barcode")
-ukuran_harga = st.sidebar.slider("Ukuran Teks Harga (pt)", min_value=5, max_value=14, value=8)[cite: 1]
-ukuran_kode = st.sidebar.slider("Ukuran Teks Kode (pt)", min_value=5, max_value=12, value=7)[cite: 1]
-ukuran_nama = st.sidebar.slider("Ukuran Nama Produk (pt)", min_value=5, max_value=12, value=6)[cite: 1]
-ukuran_toko = st.sidebar.slider("Ukuran Teks Toko (pt)", min_value=5, max_value=12, value=7)[cite: 1]
-tinggi_barcode = st.sidebar.slider("Tinggi Barcode (mm)", min_value=4, max_value=15, value=8)[cite: 1]
+ukuran_harga = st.sidebar.slider("Ukuran Teks Harga (pt)", min_value=5, max_value=14, value=8)
+ukuran_kode = st.sidebar.slider("Ukuran Teks Kode (pt)", min_value=5, max_value=12, value=7)
+ukuran_nama = st.sidebar.slider("Ukuran Nama Produk (pt)", min_value=5, max_value=12, value=6)
+ukuran_toko = st.sidebar.slider("Ukuran Teks Toko (pt)", min_value=5, max_value=12, value=7)
+tinggi_barcode = st.sidebar.slider("Tinggi Barcode (mm)", min_value=4, max_value=15, value=8)
 
 # ==================== PENGOLAHAN DATA ====================
 items = []
@@ -49,20 +49,20 @@ if mode_input == "Input Manual":
 
 else:
     st.sidebar.subheader("Upload File Excel")
-    uploaded_file = st.sidebar.file_uploader("Pilih File Excel (.xlsx / .xls)", type=["xlsx", "xls"])[cite: 1]
+    uploaded_file = st.sidebar.file_uploader("Pilih File Excel (.xlsx / .xls)", type=["xlsx", "xls"])
 
     if uploaded_file is not None:
         try:
-            df = pd.read_excel(uploaded_file)[cite: 1]
+            df = pd.read_excel(uploaded_file)
             st.write("---")
             st.subheader("Preview Data Excel:")
             st.dataframe(df)
 
-            for index, row in df.iterrows():[cite: 1]
-                nama_p = str(row.get('nama_produk', ''))[cite: 1]
-                kode_p = str(row.get('kode_produk', ''))[cite: 1]
-                harga_p = str(row.get('harga', ''))[cite: 1]
-                qty = int(row.get('jumlah', 1))[cite: 1]
+            for index, row in df.iterrows():
+                nama_p = str(row.get('nama_produk', ''))
+                kode_p = str(row.get('kode_produk', ''))
+                harga_p = str(row.get('harga', ''))
+                qty = int(row.get('jumlah', 1))
 
                 for _ in range(qty):
                     items.append({
@@ -72,7 +72,7 @@ else:
                         "harga": harga_p
                     })
         except Exception as e:
-            st.error(f"Gagal membaca file Excel: {e}")[cite: 1]
+            st.error(f"Gagal membaca file Excel: {e}")
 
 # ==================== RENDER LABEL ====================
 if items:
@@ -237,7 +237,6 @@ if items:
     </html>
     """
 
-    # Tombol Download HTML Siap Cetak
     st.download_button(
         label="📥 Download Format File Cetak (HTML)",
         data=html_code,
@@ -251,4 +250,4 @@ if items:
     components.html(html_code, height=dynamic_height, scrolling=True)
 
 else:
-    st.info("Silakan masukkan data secara manual atau upload file Excel untuk menampilkan preview cetak.")[cite: 1]
+    st.info("Silakan masukkan data secara manual atau upload file Excel untuk menampilkan preview cetak.")
